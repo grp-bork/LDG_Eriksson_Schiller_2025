@@ -20,35 +20,23 @@ Input for environmental matching, habitat modeling, and figure-specific sample s
 
 --------------------------------------------------------------------------------
 
-diversity_metrics.xlsx
+species_diversity_taxonomic_rank.xlsx
 Summary:
 Diversity metrics calculated from mOTUs4_OMDB.csv.zip.
 
 Contents:
 - Diversity metrics: Richness, Shannon index, Chao1
-- Two rarefaction cutoffs: 1,000 and 5,000 mOTU observations
-- Includes all taxonomic groups with model reliability (R² > 0.25, see Materials and Methods)
 
 Generated in: 01_alpha_diversity_clade_level_JS.R
-Used in: Habitat modeling and Figure 2, Supplementary Figures 1–2
+Used in: Habitat modeling and Figure 2, Figures S2, S3
 
 --------------------------------------------------------------------------------
 Data_generated Directory
 --------------------------------------------------------------------------------
 
-alpha_div_genus.csv
-Summary:
-Diversity metrics (Richness, Shannon, Chao1) for Alphaproteobacteria and Cyanobacteriia at the genus level, under two rarefaction cutoffs (1,000 & 5,000 mOTU observations).
-
-Generated in: FigS1_alpha_diversity_clade_level_GENUS_JS.R
-Used in: FigS1_alpha_diversity_clade_level_GENUS_analysis_JS.R
-Associated Figure: Supplementary Fig. 1
-
---------------------------------------------------------------------------------
-
 df_latGradients_alphaDiv_annual.csv
 Summary:
-Modeled annual diversity (surface mixed layer) summarized at 1° latitude bins (mean and standard deviation) for all modeled taxonomic groups.
+Modeled annual species diversity (surface mixed layer) summarized at 1° latitude bins (mean and standard deviation) for all modeled taxonomic groups (domain, phylum, class).
 
 Generated in: 4_LDG_annual_mean_sd_DE.R
 Used in: Fig4_annual_seasonal_LDG_JS.R
@@ -63,6 +51,16 @@ Modeled seasonal (monthly resolution) diversity (surface mixed layer) summarized
 Generated in: 5_LDG_monthly_mean_sd_DE.R
 Used in: Fig4_annual_seasonal_LDG_JS.R
 Associated Figure: Figure 4
+
+--------------------------------------------------------------------------------
+
+mean_annual_ldg_genus.csv
+Summary:
+Modeled annual species richness (surface mixed layer) summarized at 1° latitude bins (mean) for all modeled genera.
+
+Generated in: 2b_Global_annual_richness_ensemble_mean_sd_genusLevel_DE.R
+Used in: FigS13_LDG_per_genus_JS.R, FigS15_LDG_within_classes_JS.R
+Associated Figure: Figures S13, S15
 
 --------------------------------------------------------------------------------
 
@@ -81,8 +79,8 @@ Summary:
 Mean modeled percentage change in richness, comparing December to June at European time-series latitudes.
 
 Generated in: 3_Difference_December_Junse_ensemble_mean_sd_DE.R
-Used in: FigS7_Europe_seasonality_JS.R
-Associated Figure: Supplementary Fig. S7
+Used in: FigS11_Europe_seasonality_JS.R
+Associated Figure: Figure S11
 
 --------------------------------------------------------------------------------
 
@@ -99,12 +97,12 @@ microbeatlas_studies_meta.csv
 Summary:
 Contextual information about samples in Microbeatlas_taxonomic_profile.csv.zip, obtained and curated from the Microbeatlas database.
 
-Used in: FigS7_Europe_seasonality_JS.R
-Associated Figure: Supplementary Fig. S7
+Used in: FigS11_Europe_seasonality_JS.R
+Associated Figure: Supplementary Fig. S11
 
 --------------------------------------------------------------------------------
 
-External Datasets (Not Included)
+External Datasets (Not Included in this repo but publicly accessible)
 --------------------------------------------------------------------------------
 
 mOTUs4 taxonomic profile
@@ -127,8 +125,8 @@ Microbeatlas taxonomic profile
 Summary:
 Taxonomic profile (97% OTU identity) for European time-series studies, obtained from the Microbeatlas database.
 
-Used in: FigS7_Europe_seasonality_JS.R
-Associated Figure: Supplementary Fig. S7
+Used in: FigS11_Europe_seasonality_JS.R
+Associated Figure: Supplementary Fig. S11
 
 
 Ocean_regions_shapefile
