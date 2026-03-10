@@ -10,35 +10,49 @@ library(tidyr)
 library(purrr)
 
 # Metrics
-rarefying_sample_size = 5000
 alpha_diversity_metric = "Richness" # Richness Shannon Chao1
 
 ## create dirs
-dir = paste0(rarefying_sample_size, "_",
-             alpha_diversity_metric)
+dir = paste0(alpha_diversity_metric)
 
 # Data
-dir.create("../../Data")#should already contain samples_contextual.xlsx and diversity_metrics.xlsx
-dir.create("../../Data/Internal")
-dir.create("../../Data/Data_generated") 
-dir.create("../../Data/Internal/FigS2_LDG_surface_mesopelagic_stat_JS")
-dir.create(paste0("../../Data/Internal/FigS2_LDG_surface_mesopelagic_stat_JS/",dir))
+dir.create("../Data")
+dir.create("../Data/Internal")
+dir.create("../Data/External") #should already contain samples_contextual.xlsx and diversity_metrics.xlsx
+dir.create("../Data/Internal/FigS3_LDG_surface_mesopelagic_stat_JS")
+dir.create(paste0("../Data/Internal/FigS3_LDG_surface_mesopelagic_stat_JS/",dir))
 
 # Output
-dir.create("../Output")
-dir.create("../Output/FigS2_LDG_surface_mesopelagic_stat_JS")
-dir.create(paste0("../Output/FigS2_LDG_surface_mesopelagic_stat_JS/",dir))
+dir.create("./Output")
+dir.create("./Output/FigS3_LDG_surface_mesopelagic_stat_JS")
+dir.create(paste0("./Output/FigS3_LDG_surface_mesopelagic_stat_JS/",dir))
 
 ## read data
 # meta data
-sheet2 = as.data.table(read_excel("../../Data/samples_contextual.xlsx", sheet = 2))
-sheet4 = as.data.table(read_excel("../../Data/samples_contextual.xlsx", sheet = 4))
+sheet2 = as.data.table(read_excel("../Data/External/samples_contextual.xlsx", sheet = 2))
+sheet4 = as.data.table(read_excel("../Data/External/samples_contextual.xlsx", sheet = 4))
 meta = merge(sheet2, sheet4, by = "biosample", all = TRUE)
 # alpha diversity
-alpha_diversity = as.data.table(read_excel("../../Data/diversity_metrics.xlsx", sheet = ifelse(rarefying_sample_size == 5000,
-                                                                                                     2, # sheet 2 contains alpha diversity metrics from a rarefaction level of 5,000 mOTU counts
-                                                                                                     1) # sheet 1 contains alpha diversity metrics from a rarefaction level of 1,000 mOTU counts
-))
+file = "../Data/External/species_diversity_taxonomic_rank.xlsx"
+sheets = excel_sheets(file)
+alpha_diversity = NULL
+for (s in sheets) {
+  dt = as.data.table(read_excel(file, sheet = s))
+  if (is.null(alpha_diversity)) {
+    alpha_diversity = dt
+  } else {
+    # keep only columns not already present
+    new_cols = setdiff(names(dt), names(alpha_diversity))
+    if (length(new_cols) > 0) {
+      alpha_diversity = merge(
+        alpha_diversity,
+        dt[, c("biosample", new_cols), with = FALSE],
+        by = "biosample",
+        all = TRUE
+      )
+    }
+  }
+}
 
 # join contextual and alpha diversity data
 meta_alpha_div = left_join(meta,
@@ -59,15 +73,15 @@ meta_alpha_div_mesopelagic = meta_alpha_div[meta_alpha_div$analysis_type == "mes
 # subset surface samples randomly to count of mesopelagic samples (multiple iterations) --> calculte Wilcoxon test (low vs high latitudes)
 # Setup
 set.seed(123)
-n_mesopelagic = sum(!is.na(meta_alpha_div_mesopelagic$prokaryotes_Richness_5000))
+n_mesopelagic = sum(!is.na(meta_alpha_div_mesopelagic$prokaryotes_Richness))
 n_iterations = 1000
 
 # Fold change + Wilcoxon function
 calculate_fc_wilcox = function(sampled_df) {
   df_long = sampled_df %>%
     select(lat, 
-           bacteria = paste0("domain_Bacteria_", alpha_diversity_metric, "_", rarefying_sample_size),
-           archaea  = paste0("domain_Archaea_", alpha_diversity_metric, "_", rarefying_sample_size)) %>%
+           bacteria = paste0("domain_Bacteria_", alpha_diversity_metric),
+           archaea  = paste0("domain_Archaea_", alpha_diversity_metric)) %>%
     pivot_longer(cols = c(bacteria, archaea), names_to = "domain", values_to = "richness") %>%
     mutate(
       domain = factor(ifelse(domain == "bacteria", "Bacteria", "Archaea"), 
@@ -122,10 +136,10 @@ p1_box = ggplot(results, aes(x = domain, y = fold_change)) +
     y = "Fold Change"
   )
 
-ggsave(paste0("../Output/FigS2_LDG_surface_mesopelagic_stat_JS/", dir, "/foldchange_boxplot.png"), plot = p1_box,
+ggsave(paste0("./Output/FigS3_LDG_surface_mesopelagic_stat_JS/", dir, "/foldchange_boxplot.png"), plot = p1_box,
        width = 8, height = 8, units = "cm")
 
-ggsave(paste0("../Output/FigS2_LDG_surface_mesopelagic_stat_JS/", dir, "/foldchange_boxplot.svg"), plot = p1_box,
+ggsave(paste0("./Output/FigS3_LDG_surface_mesopelagic_stat_JS/", dir, "/foldchange_boxplot.svg"), plot = p1_box,
        width = 8, height = 8, units = "cm", device = "svg")
 
 
@@ -148,8 +162,8 @@ p2_box = ggplot(results, aes(x = domain, y = p_value)) +
     y = "p-value"
   )
 
-ggsave(paste0("../Output/FigS2_LDG_surface_mesopelagic_stat_JS/", dir, "/p_wilcoxon_boxplot.png"), plot = p2_box,
+ggsave(paste0("./Output/FigS3_LDG_surface_mesopelagic_stat_JS/", dir, "/p_wilcoxon_boxplot.png"), plot = p2_box,
        width = 8, height = 8, units = "cm")
 
-ggsave(paste0("../Output/FigS2_LDG_surface_mesopelagic_stat_JS/", dir, "/p_wilcoxon_boxplot.svg"), plot = p2_box,
+ggsave(paste0("./Output/FigS3_LDG_surface_mesopelagic_stat_JS/", dir, "/p_wilcoxon_boxplot.svg"), plot = p2_box,
        width = 8, height = 8, units = "cm", device = "svg")

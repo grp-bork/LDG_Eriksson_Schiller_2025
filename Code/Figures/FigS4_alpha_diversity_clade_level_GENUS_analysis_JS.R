@@ -10,14 +10,14 @@ library(ggtext)
 library(readxl)
 
 # Data
-dir.create("../../Data") #should already contain diversity_metrics.xlsx and samples_contextual.xlsx
-dir.create("../../Data/Internal")
-dir.create("../../Data/Data_generated") #should already contain alpha_div_genus.csv
-dir.create("../../Data/Internal/FigS1_alpha_diversity_clade_level_GENUS_analysis_JS")
+dir.create("../Data")
+dir.create("../Data/Internal")
+dir.create("../Data/External") #should already contain diversity_metrics.xlsx and samples_contextual.xlsx and alpha_div_genus.csv
+dir.create("../Data/Internal/FigS4_alpha_diversity_clade_level_GENUS_analysis_JS")
 
 # Output
-dir.create("../Output")
-dir.create("../Output/FigS1_alpha_diversity_clade_level_GENUS_analysis_JS")
+dir.create("./Output")
+dir.create("./Output/FigS4_alpha_diversity_clade_level_GENUS_analysis_JS")
 
 # rarefaction level
 rarefying_level = 5000
@@ -25,25 +25,41 @@ diversity_metric = "Richness"
 
 ## read data
 ## GTDB genus diversity & GTDB species diversity
-div_gtdb_genus = fread("../../Data/Data_generated/alpha_div_genus.csv") # or if script already run from: "../../Data/Internal/03.2_richness_rarefied_genus/alpha_div_genus.csv"
+div_gtdb_genus = fread("../Data/External/alpha_div_genus.csv") # or if script already run from: "../Data/Internal/03.2_richness_rarefied_genus/alpha_div_genus.csv"
 # alpha diversity
-div_gtdb_species = as.data.table(read_excel("../../Data/diversity_metrics.xlsx", sheet = ifelse(rarefying_level == 5000,
-                                                                                                     2, # sheet 2 contains alpha diversity metrics from a rarefaction level of 5,000 mOTU counts
-                                                                                                     1) # sheet 1 contains alpha diversity metrics from a rarefaction level of 1,000 mOTU counts
-))
+file = "../Data/External/species_diversity_taxonomic_rank.xlsx"
+sheets = excel_sheets(file)
+div_gtdb_species = NULL
+for (s in sheets) {
+  dt = as.data.table(read_excel(file, sheet = s))
+  if (is.null(div_gtdb_species)) {
+    div_gtdb_species = dt
+  } else {
+    # keep only columns not already present
+    new_cols = setdiff(names(dt), names(div_gtdb_species))
+    if (length(new_cols) > 0) {
+      div_gtdb_species = merge(
+        div_gtdb_species,
+        dt[, c("biosample", new_cols), with = FALSE],
+        by = "biosample",
+        all = TRUE
+      )
+    }
+  }
+}
 
 # meta data
-sheet2 = as.data.table(read_excel("../../Data/samples_contextual.xlsx", sheet = 2))
-sheet4 = as.data.table(read_excel("../../Data/samples_contextual.xlsx", sheet = 4))
+sheet2 = as.data.table(read_excel("../Data/External/samples_contextual.xlsx", sheet = 2))
+sheet4 = as.data.table(read_excel("../Data/External/samples_contextual.xlsx", sheet = 4))
 meta = merge(sheet2, sheet4, by = "biosample", all = TRUE)
 
 # Generate dynamic column names
 genus_col         = paste0(diversity_metric, "_", rarefying_level)
-species_col       = paste0("prokaryotes_", diversity_metric, "_", rarefying_level)
+species_col       = paste0("prokaryotes_", diversity_metric)
 cyano_genus_col   = paste0(diversity_metric, "_Cyano_", rarefying_level)
 alpha_genus_col   = paste0(diversity_metric, "_Alphaproteo_", rarefying_level)
-cyano_species_col = paste0("d__Bacteria_p__Cyanobacteriota_c__Cyanobacteriia_", diversity_metric, "_", rarefying_level)
-alpha_species_col = paste0("d__Bacteria_p__Pseudomonadota_c__Alphaproteobacteria_", diversity_metric, "_", rarefying_level)
+cyano_species_col = paste0("d__Bacteria_p__Cyanobacteriota_c__Cyanobacteriia_", diversity_metric)
+alpha_species_col = paste0("d__Bacteria_p__Pseudomonadota_c__Alphaproteobacteria_", diversity_metric)
 
 # Join genus and species diversity by biosample, then join with metadata
 div_gtdb_all = left_join(div_gtdb_genus, div_gtdb_species, by = "biosample")
@@ -58,9 +74,9 @@ genus_col        = paste0("Richness_", rarefying_level)
 cyano_genus_col  = paste0("Richness_Cyano_", rarefying_level)
 alpha_genus_col  = paste0("Richness_Alphaproteo_", rarefying_level)
 
-species_col        = paste0("prokaryotes_", diversity_metric, "_", rarefying_level)
-cyano_species_col  = paste0("class_Cyanobacteriia_", diversity_metric, "_", rarefying_level)
-alpha_species_col  = paste0("class_Alphaproteobacteria_", diversity_metric, "_", rarefying_level)
+species_col        = paste0("prokaryotes_", diversity_metric)
+cyano_species_col  = paste0("class_Cyanobacteriia_", diversity_metric)
+alpha_species_col  = paste0("class_Alphaproteobacteria_", diversity_metric)
 
 #  Subset 
 mld = meta_div_gtdb %>% filter(analysis_type == "MLD")
@@ -177,8 +193,8 @@ p = ggplot(df, aes(x = lat_bin, y = .data[[div_col]])) +
   scale_x_discrete(labels = x_labels_custom, drop = FALSE)
 p
 # Save
-ggsave("../Output/FigS1_alpha_diversity_clade_level_GENUS_analysis_JS/LDG_genus.png", plot = p, width = 4, height = 5)
-ggsave("../Output/FigS1_alpha_diversity_clade_level_GENUS_analysis_JS/LDG_genus.svg", plot = p, width = 4, height = 5)
+ggsave("./Output/FigS4_alpha_diversity_clade_level_GENUS_analysis_JS/LDG_genus.png", plot = p, width = 4, height = 5)
+ggsave("./Output/FigS4_alpha_diversity_clade_level_GENUS_analysis_JS/LDG_genus.svg", plot = p, width = 4, height = 5)
 
 ## contribution of alphaproteobacteria and cyanobacteriia taxa to overall prokaryotic richness (pie chart)
 # Filter for MLD samples only
@@ -209,9 +225,9 @@ genus_cyano_col = paste0("Richness_Cyano_", rarefying_level)
 genus_alpha_col = paste0("Richness_Alphaproteo_", rarefying_level)
 
 # Species level column names 
-species_total_col = paste0("prokaryotes_", diversity_metric, "_", rarefying_level)
-species_cyano_col = paste0("class_Cyanobacteriia_", diversity_metric, "_", rarefying_level)
-species_alpha_col = paste0("class_Alphaproteobacteria_", diversity_metric, "_", rarefying_level)
+species_total_col = paste0("prokaryotes_", diversity_metric)
+species_cyano_col = paste0("class_Cyanobacteriia_", diversity_metric)
+species_alpha_col = paste0("class_Alphaproteobacteria_", diversity_metric)
 
 # Genus level means 
 genus_total = mean(df_mld[[genus_total_col]], na.rm = TRUE)
@@ -244,5 +260,5 @@ ggplot(pie_combined, aes(x = "", y = Richness, fill = Group)) +
   theme(legend.title = element_blank())
 
 # Save 
-ggsave("../Output/FigS1_alpha_diversity_clade_level_GENUS_analysis_JS/fraction_richness_MLD.png", width = 7, height = 4.5)
-ggsave("../Output/FigS1_alpha_diversity_clade_level_GENUS_analysis_JS/fraction_richness_MLD.svg", width = 7, height = 4.5)
+ggsave("./Output/FigS4_alpha_diversity_clade_level_GENUS_analysis_JS/fraction_richness_MLD.png", width = 7, height = 4.5)
+ggsave("./Output/FigS4_alpha_diversity_clade_level_GENUS_analysis_JS/fraction_richness_MLD.svg", width = 7, height = 4.5)

@@ -11,36 +11,32 @@ library(dplyr)
 library(reshape2)
 
 # Data
-dir.create("../../Data") #should already contain samples_contextual.xlsx
-dir.create("../../Data/Internal")
-dir.create("../../Data/Data_generated") #should already contain mOTUs4_OMDB.csv.zip and mOTUsv4.0.gtdb.taxonomy.80mv.tsv.zip 
-dir.create("../../Data/Internal/FigS1_alpha_diversity_clade_level_GENUS_JS")
+dir.create("../Data")
+dir.create("../Data/Internal")
+dir.create("../Data/External") #should already contain mOTUsv4.profiles_subset_to_OMDB.tsv.gz and mOTUsv4.0.gtdb.taxonomy.80mv.tsv and samples_contextual.xlsx
+dir.create("../Data/Internal/FigS4_alpha_diversity_clade_level_GENUS_JS")
 
 # Output
-dir.create("../Output")
-dir.create("../Output/FigS1_alpha_diversity_clade_level_GENUS_JS")
+dir.create("./Output")
+dir.create("./Output/FigS4_alpha_diversity_clade_level_GENUS_JS")
 
 ## Read
 # mOTU
-motu = fread(unzip("../../Data/Data_generated/mOTUs4_OMDB.csv.zip", 
-                   files = "mOTUs4_OMDB.csv", 
-                   exdir = tempdir()))
+motu = fread("../Data/External/01_motus_meta/mOTUsv4.profiles_subset_to_OMDB.tsv.gz")
 colnames(motu) = make.names(colnames(motu))
 colnames(motu) = gsub("_METAG","",colnames(motu))
 colnames(motu) = sub("^[^_]+_", "",colnames(motu))
 colnames(motu) <- gsub("\\.", "-", colnames(motu))
 # GTDB
-gtdb = fread(unzip("../../Data/Data_generated/mOTUsv4.0.gtdb.taxonomy.80mv.tsv.zip", 
-                   files = "mOTUsv4.0.gtdb.taxonomy.80mv.tsv", 
-                   exdir = tempdir()))
+gtdb = fread("../Data/External/mOTUsv4.0.gtdb.taxonomy.80mv.tsv")
 # if a cell contains "Unknown", replace entire cell content with an NA
 gtdb_na <- gtdb[, lapply(.SD, function(x) ifelse(grepl("Unknown", x), NA, x))]
 # consider only mOTUs that are in the taxonomic profile
 index = gtdb_na$motu %in% motu[[1]]
 gtdb_na_select <- gtdb_na[index, ]
 # meta data
-sheet2 = as.data.table(read_excel("../../Data/samples_contextual.xlsx", sheet = 2))
-sheet4 = as.data.table(read_excel("../../Data/samples_contextual.xlsx", sheet = 4))
+sheet2 = as.data.table(read_excel("../Data/External/samples_contextual.xlsx", sheet = 2))
+sheet4 = as.data.table(read_excel("../Data/External/samples_contextual.xlsx", sheet = 4))
 meta = merge(sheet2, sheet4, by = "biosample", all = TRUE)
 
 ## Generate a genus-level taxonomic profile
@@ -91,7 +87,7 @@ motu_genus[, genus := ifelse(!is.na(full_tax_string), full_tax_string, genus)]
 # Drop helper column
 motu_genus[, full_tax_string := NULL]
 # Save updated table
-fwrite(motu_genus, "../../Data/Internal/FigS1_alpha_diversity_clade_level_GENUS_JS/motu_genus.csv")
+fwrite(motu_genus, "../Data/Internal/FigS4_alpha_diversity_clade_level_GENUS_JS/motu_genus.csv")
 
 ## compare unassigned fraction between motu and motu_genus
 # Define sample columns
@@ -124,7 +120,7 @@ ggplot(frac_combined, aes(x = source, y = fraction)) +
   xlab("") +
   ggtitle("Comparison of Unassigned Fractions per Sample") +
   theme_minimal()
-ggsave("../Output/FigS1_alpha_diversity_clade_level_GENUS_JS/fraction_unassigned_motu_species_genus.png")
+ggsave("./Output/FigS4_alpha_diversity_clade_level_GENUS_JS/fraction_unassigned_motu_species_genus.png")
 
 ## Calculate alpha diversity of classes Alphaproteobacteria and Cyanobacteriia
 # Transpose: samples as rows, taxa as columns
@@ -219,4 +215,4 @@ for (i in 1:nrow(motu_genus_assigned)) {
   }
 }
 # Save result
-fwrite(alpha_div, "../../Data/Internal/FigS1_alpha_diversity_clade_level_GENUS_JS/alpha_div_genus.csv")
+fwrite(alpha_div, "../Data/Internal/FigS4_alpha_diversity_clade_level_GENUS_JS/alpha_div_genus.csv")

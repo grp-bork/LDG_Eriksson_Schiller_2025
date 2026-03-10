@@ -11,35 +11,49 @@ library(readxl)
 
 # Metrics
 analysis = "MLD" # "mesopelagic" "MLD"
-rarefying_sample_size = 5000
 alpha_diversity_metric = "Richness" # Richness Shannon Chao1
 
 ## create dirs
 dir = paste0(analysis, "_",
-             rarefying_sample_size, "_",
              alpha_diversity_metric)
 # Data
-dir.create("../../Data") #should already contain samples_contextual.xlsx and diversity_metrics.xlsx
-dir.create("../../Data/Internal")
-dir.create("../../Data/Data_generated")
-dir.create("../../Data/Internal/Fig2_samplewise_alphadiv_latitude_JS")
-dir.create(paste0("../../Data/Internal/Fig2_samplewise_alphadiv_latitude_JS/",dir))
+dir.create("../Data")
+dir.create("../Data/Internal")
+dir.create("../Data/External") #should already contain samples_contextual.xlsx and diversity_metrics.xlsx
+dir.create("../Data/Internal/Fig2_samplewise_alphadiv_latitude_JS")
+dir.create(paste0("../Data/Internal/Fig2_samplewise_alphadiv_latitude_JS/",dir))
 
 # Output
-dir.create("../Output")
-dir.create("../Output/Fig2_samplewise_alphadiv_latitude_JS")
-dir.create(paste0("../Output/Fig2_samplewise_alphadiv_latitude_JS/",dir))
+dir.create("./Output")
+dir.create("./Output/Fig2_samplewise_alphadiv_latitude_JS")
+dir.create(paste0("./Output/Fig2_samplewise_alphadiv_latitude_JS/",dir))
 
 ## read data
 # meta data
-sheet2 = as.data.table(read_excel("../../Data/samples_contextual.xlsx", sheet = 2))
-sheet4 = as.data.table(read_excel("../../Data/samples_contextual.xlsx", sheet = 4))
+sheet2 = as.data.table(read_excel("../Data/External/samples_contextual.xlsx", sheet = 2))
+sheet4 = as.data.table(read_excel("../Data/External/samples_contextual.xlsx", sheet = 4))
 meta = merge(sheet2, sheet4, by = "biosample", all = TRUE)
 # alpha diversity
-alpha_diversity = as.data.table(read_excel("../../Data/diversity_metrics.xlsx", sheet = ifelse(rarefying_sample_size == 5000,
-                                                                                                                          2, # sheet 2 contains alpha diversity metrics from a rarefaction level of 5,000 mOTU counts
-                                                                                                                          1) # sheet 1 contains alpha diversity metrics from a rarefaction level of 1,000 mOTU counts
-                                           ))
+file = "../Data/External/species_diversity_taxonomic_rank.xlsx"
+sheets = excel_sheets(file)
+alpha_diversity = NULL
+for (s in sheets) {
+  dt = as.data.table(read_excel(file, sheet = s))
+  if (is.null(alpha_diversity)) {
+    alpha_diversity = dt
+  } else {
+    # keep only columns not already present
+    new_cols = setdiff(names(dt), names(alpha_diversity))
+    if (length(new_cols) > 0) {
+      alpha_diversity = merge(
+        alpha_diversity,
+        dt[, c("biosample", new_cols), with = FALSE],
+        by = "biosample",
+        all = TRUE
+      )
+    }
+  }
+}
 
 # join contextual and alpha diversity data
 meta_alpha_div = left_join(meta,
@@ -62,8 +76,8 @@ meta_alpha_div$lat_group_5 = cut(meta_alpha_div$lat,
 ## Bacteria with Prokaryotes
 # Compute Pearson correlation
 cor_test = cor.test(
-  meta_alpha_div[[paste0("prokaryotes_", alpha_diversity_metric, "_", rarefying_sample_size)]],
-  meta_alpha_div[[paste0("domain_Bacteria_", alpha_diversity_metric, "_", rarefying_sample_size)]],
+  meta_alpha_div[[paste0("prokaryotes_", alpha_diversity_metric)]],
+  meta_alpha_div[[paste0("domain_Bacteria_", alpha_diversity_metric)]],
   method = "pearson"
 )
 # Prepare correlation label
@@ -73,13 +87,13 @@ cor_label = paste0(
 )
 # Create plot
 # Calculate y position
-y_vals = meta_alpha_div[[paste0("domain_Bacteria_", alpha_diversity_metric, "_", rarefying_sample_size)]]
-y_pos = 0.95 * max(meta_alpha_div[[paste0("domain_Bacteria_", alpha_diversity_metric, "_", rarefying_sample_size)]], na.rm = TRUE)
+y_vals = meta_alpha_div[[paste0("domain_Bacteria_", alpha_diversity_metric)]]
+y_pos = 0.95 * max(meta_alpha_div[[paste0("domain_Bacteria_", alpha_diversity_metric)]], na.rm = TRUE)
 p = ggplot(
   meta_alpha_div,
   aes_string(
-    x = paste0("prokaryotes_", alpha_diversity_metric, "_", rarefying_sample_size),
-    y = paste0("domain_Bacteria_", alpha_diversity_metric, "_", rarefying_sample_size)
+    x = paste0("prokaryotes_", alpha_diversity_metric),
+    y = paste0("domain_Bacteria_", alpha_diversity_metric)
   )
 ) +
   geom_point(size = 1) +
@@ -98,14 +112,14 @@ p = ggplot(
     y = paste0("Bacterial ", alpha_diversity_metric)
   )
 p
-ggsave(plot = p, file = paste0("../Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/Prokaryotes_Bacteria.png"), width = 8, height = 8, units = "cm")
-ggsave(plot = p, file = paste0("../Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/Prokaryotes_Bacteria.svg"), width = 8, height = 8, units = "cm", device = "svg")
+ggsave(plot = p, file = paste0("./Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/Prokaryotes_Bacteria.png"), width = 8, height = 8, units = "cm")
+ggsave(plot = p, file = paste0("./Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/Prokaryotes_Bacteria.svg"), width = 8, height = 8, units = "cm", device = "svg")
 
 ## Archaea with Prokaryotes
 # Compute Pearson correlation
 cor_test = cor.test(
-  meta_alpha_div[[paste0("prokaryotes_", alpha_diversity_metric, "_", rarefying_sample_size)]],
-  meta_alpha_div[[paste0("domain_Archaea_", alpha_diversity_metric, "_", rarefying_sample_size)]],
+  meta_alpha_div[[paste0("prokaryotes_", alpha_diversity_metric)]],
+  meta_alpha_div[[paste0("domain_Archaea_", alpha_diversity_metric)]],
   method = "pearson"
 )
 # Prepare correlation label
@@ -115,13 +129,13 @@ cor_label = paste0(
 )
 # Create plot
 # Calculate y position
-y_vals = meta_alpha_div[[paste0("domain_Bacteria_", alpha_diversity_metric, "_", rarefying_sample_size)]]
-y_pos = 0.95 * max(meta_alpha_div[[paste0("domain_Archaea_", alpha_diversity_metric, "_", rarefying_sample_size)]], na.rm = TRUE)
+y_vals = meta_alpha_div[[paste0("domain_Bacteria_", alpha_diversity_metric)]]
+y_pos = 0.95 * max(meta_alpha_div[[paste0("domain_Archaea_", alpha_diversity_metric)]], na.rm = TRUE)
 p = ggplot(
   meta_alpha_div,
   aes_string(
-    x = paste0("prokaryotes_", alpha_diversity_metric, "_", rarefying_sample_size),
-    y = paste0("domain_Archaea_", alpha_diversity_metric, "_", rarefying_sample_size)
+    x = paste0("prokaryotes_", alpha_diversity_metric),
+    y = paste0("domain_Archaea_", alpha_diversity_metric)
   )
 ) +
   geom_point(size = 1) +
@@ -140,8 +154,8 @@ p = ggplot(
     y = paste0("Archaeal ", alpha_diversity_metric)
   )
 p
-ggsave(plot = p, file = paste0("../Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/Prokaryotes_Archaea.png"), width = 8, height = 8, units = "cm")
-ggsave(plot = p, file = paste0("../Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/Prokaryotes_Archaea.svg"), width = 8, height = 8, units = "cm", device = "svg")
+ggsave(plot = p, file = paste0("./Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/Prokaryotes_Archaea.png"), width = 8, height = 8, units = "cm")
+ggsave(plot = p, file = paste0("./Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/Prokaryotes_Archaea.svg"), width = 8, height = 8, units = "cm", device = "svg")
 
 
 ### Wilcoxon groups
@@ -149,8 +163,8 @@ ggsave(plot = p, file = paste0("../Output/Fig2_samplewise_alphadiv_latitude_JS/"
 df = meta_alpha_div[!is.na(meta_alpha_div$lat_group_5), ]
 df_long = df %>%
   dplyr::select(lat_group_5, lat, 
-                bacteria = paste0("domain_Bacteria_", alpha_diversity_metric, "_", rarefying_sample_size),
-                archaea  = paste0("domain_Archaea_", alpha_diversity_metric, "_", rarefying_sample_size)) %>%
+                bacteria = paste0("domain_Bacteria_", alpha_diversity_metric),
+                archaea  = paste0("domain_Archaea_", alpha_diversity_metric)) %>%
   pivot_longer(cols = c(bacteria, archaea), names_to = "domain", values_to = "richness") %>%
   mutate(
     domain = factor(ifelse(domain == "bacteria", "Bacteria", "Archaea"), levels = c("Bacteria", "Archaea")),
@@ -196,15 +210,15 @@ df_long$lat_bin = cut(df_long$lat,
 all_bins = levels(cut(lat_breaks[-1], breaks = lat_breaks, include.lowest = TRUE, right = FALSE))
 df_long$lat_bin = factor(df_long$lat_bin, levels = all_bins)
 
-# Clean up labels: "[x,y)" -> "x to y"
+# clean labels
 clean_labels = gsub("\\[|\\)|\\]", "", levels(df_long$lat_bin))
 clean_labels = gsub(",", " to ", clean_labels)
 clean_labels = gsub("(-?\\d+)", "\\1°", clean_labels)
 levels(df_long$lat_bin) = clean_labels
 
-# Determine color per label
-label_colors = sapply(levels(df_long$lat_bin), function(label) {
-  # Extract numeric bounds
+# styled labels
+lat_bin_levels = levels(df_long$lat_bin)
+label_colors = sapply(lat_bin_levels, function(label) {
   nums = as.numeric(gsub("°", "", unlist(strsplit(label, " to "))))
   if (all(nums >= -40 & nums < 40)) {
     paste0("<span style='color:black;'>", label, "</span>")
@@ -212,7 +226,6 @@ label_colors = sapply(levels(df_long$lat_bin), function(label) {
     paste0("<span style='color:#696969;'>", label, "</span>")
   }
 })
-levels(df_long$lat_bin) = label_colors
 
 
 # Plot
@@ -248,5 +261,5 @@ p = ggplot(df_long, aes(x = lat_bin, y = richness)) +
   scale_x_discrete(labels = x_labels_custom, drop = FALSE)
 p
 # Save plots
-ggsave(plot = p, file = paste0("../Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/boxplot_latitude_diversity_Bacteria_Archaea_stat_wilcoxon.png"), width = 30, height = 8, units = "cm")
-ggsave(plot = p, file = paste0("../Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/boxplot_latitude_diversity_Bacteria_Archaea_stat_wilcoxon.svg"), width = 30, height = 8, units = "cm", device = "svg")
+ggsave(plot = p, file = paste0("./Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/boxplot_latitude_diversity_Bacteria_Archaea_stat_wilcoxon.png"), width = 30, height = 8, units = "cm")
+ggsave(plot = p, file = paste0("./Output/Fig2_samplewise_alphadiv_latitude_JS/", dir, "/boxplot_latitude_diversity_Bacteria_Archaea_stat_wilcoxon.svg"), width = 30, height = 8, units = "cm", device = "svg")

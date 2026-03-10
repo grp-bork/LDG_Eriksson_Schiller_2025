@@ -9,28 +9,28 @@ library(vegan)
 library(dplyr)
 
 # create dir
-dir.create("../../Data")
-dir.create("../../Data/Internal")
-dir.create("../../Data/Internal/01_alpha_diversity_clade_level_JS") # directory for output files of this script
-dir.create("../../Data/Data_generated") # store mOTUs4_OMDB.csv.zip and mOTUsv4.0.gtdb.taxonomy.80mv.tsv.zip here
+dir.create("../Data")
+dir.create("../Data/Internal")
+dir.create("../Data/Internal/01_alpha_diversity_clade_level_JS") # directory for output files of this script
+dir.create("../Data/External") # store mOTUsv4.profiles_subset_to_OMDB.tsv.gz and mOTUsv4.0.gtdb.taxonomy.80mv.tsv here
 
 ## Choose on how many cores you want to run the code in parallel (default = 1)
 n_cores = 1
 
 ## Read taxonomic mOTU profile
-motu = fread(unzip("../../Data/Data_generated/mOTUs4_OMDB.csv.zip", 
-                    files = "mOTUs4_OMDB.csv", 
-                    exdir = tempdir()))
-
+motu = fread("../Data/External/mOTUsv4.profiles_subset_to_OMDB.tsv.gz")
+# columns are sample IDs --> clean them
+colnames(motu) = make.names(colnames(motu))
+colnames(motu) = gsub("_METAG","",colnames(motu))
+colnames(motu) = sub("^[^_]+_", "",colnames(motu))
+colnames(motu) = gsub("\\.", "-", colnames(motu))
 ## rm the motu col (store mOTU IDs as a vector)
 motu_ids = motu$V1
 motu = motu %>% dplyr::select(-V1)
 
 
 ## Read GTDB taxonomic assignment per mOTU
-gtdb = fread(unzip("../../Data/Data_generated/mOTUsv4.0.gtdb.taxonomy.80mv.tsv.zip", 
-                    files = "mOTUsv4.0.gtdb.taxonomy.80mv.tsv", 
-                    exdir = tempdir()))
+gtdb = fread("../Data/External/mOTUsv4.0.gtdb.taxonomy.80mv.tsv")
 # if a cell contains "Unknown", replace entire cell content with an NA
 gtdb_na = gtdb[, lapply(.SD, function(x) ifelse(grepl("Unknown", x), NA, x))]
 # consider only mOTUs that are in the taxonomic motu profile
@@ -46,7 +46,7 @@ set.seed(1234)
 richness_index = data.frame(biosample = colnames(motu))
 
 # definition of the taxonomic levels to calculate alpha diversity for
-taxonomic_levels = c("prokaryotes", "domain", "phylum", "class")
+taxonomic_levels = c("prokaryotes", "domain", "phylum", "class", "order", "family", "genus")
 
 # definition of number of rarefaction iterations and rarefaction sample size
 num_iterations = 200
@@ -150,7 +150,7 @@ for (taxonomic_level in taxonomic_levels) {
   richness_index = richness_index[, c(TRUE, colSums(richness_index[, -1], na.rm = TRUE) > 0)]
   
   # write as .csv
-  output_file = paste0("../../Data/Internal/01_alpha_diversity_clade_level_JS/alpha_diversity_", taxonomic_level, "_rarefied", sample_size, ".csv")
+  output_file = paste0("../Data/Internal/01_alpha_diversity_clade_level_JS/alpha_diversity_", taxonomic_level, "_rarefied", sample_size, ".csv")
   fwrite(richness_index, file = output_file, row.names = FALSE)
   print(paste0("Saved results to ", output_file))
 }
