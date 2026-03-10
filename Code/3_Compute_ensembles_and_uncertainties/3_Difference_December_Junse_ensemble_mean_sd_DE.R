@@ -23,7 +23,6 @@
 ##   and Archaea.
 ##
 ## Required R packages (tested versions):
-## Required R packages (tested versions):
 ##   - data.table  (version 1.15.4)
 ##   - dplyr       (version 1.1.2)
 ##   - ggplot2     (version 3.5.2)

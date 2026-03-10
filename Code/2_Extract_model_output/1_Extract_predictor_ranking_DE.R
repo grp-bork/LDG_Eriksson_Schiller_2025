@@ -1,5 +1,5 @@
 ## ====================================================================================================
-## This R script extracts and compiles predictor importance rankings from CEPHALOPOD species distribution 
+## This R script extracts and compiles predictor importance rankings from CEPHALOPOD habitat 
 ## model outputs for prokaryotic taxa. It processes individual ensemble model files, aggregates predictor 
 ## rankings by variable and clade, and saves both detailed and combined feature importance tables for 
 ## downstream analyses.
@@ -44,14 +44,14 @@ library(dplyr)
 library(tibble)
 
 # Load configuration file from the Cephalopod modeling pipeline (https://github.com/alexschickele/CEPHALOPOD)
-source("/net/sea/work/deriksson/Projects/CEPHALOPOD/code/00_config.R")
+source("./CEPHALOPOD/code/00_config.R")
 
 # SWITCH - Choose log or non-log predictors
-trans <- c("Non_log", "Log")
+trans <- c("Non_log", "Log") # Just in case you ran the model two times with and wiithout log transfomred predictors.
 t <- 1
 
 # Depth levels
-depth_level <- c("MLD", "0_10Meters") # we only use MLD in our analysis --> d = 1
+depth_level <- c("MLD", "0_10Meters") # we only use MLD in our analysis in our manuscript --> d = 1
 d <- 1
 
 # Input and output directories --> Save the cephalopod output data in Data_generated folderdirectory <- paste0("Data/Data_generated/Cephalopod_output/", trans[t])

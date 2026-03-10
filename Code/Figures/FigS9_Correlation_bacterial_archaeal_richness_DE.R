@@ -1,64 +1,78 @@
 ## ====================================================================================================
-## This R script generates Figure S6, illustrating the correlation between Archaeal and Bacterial 
-## diversity indices (Richness, Shannon, and Chao1) across varying longitudinal transects.
+## This R script performs comprehensive correlation analysis between bacterial and archaeal diversity
+## patterns across global ocean basins. The analysis examines three diversity indices (richness,
+## Shannon diversity, and Chao1 estimates) to assess the relationship between bacterial and archaeal
+## communities in both global oceans (0-90° latitude) and tropical/subtropical regions (0-40° latitude).
+## The script generates hexagonal density plots, calculates Pearson correlations with statistical
+## significance testing, and creates publication-ready visualizations to examine potential coupling
+## or decoupling of bacterial and archaeal diversity patterns.
 ##
 ## Author:       Dominic Eriksson
-## Date:         8th of October 2025
+## Date:         27th of February 2026
 ## Affiliation:  Environmental Physics Group UP, ETH Zürich, Switzerland
 ## Contact:      deriksson@ethz.ch
 ##
 ## Input files:
-##   - RData files containing ensemble mean predictions for Archaea and Bacteria diversity indices:
-##   - Files saved in folder: Code/2_Extract_model_outputs/2_Output/Non_log/
+##   - Domain Archaea richness RData with ensemble mean predictions
+##   - Domain Bacteria richness RData with ensemble mean predictions
+##   - Domain Archaea Shannon diversity RData with ensemble statistics
+##   - Domain Bacteria Shannon diversity RData with ensemble statistics
+##   - Domain Archaea Chao1 estimates RData with diversity predictions
+##   - Domain Bacteria Chao1 estimates RData with diversity predictions
 ##
 ## Output files:
-##   - SVG figure showing hexbin scatter plots of Archaeal vs. Bacterial richness correlations.
-##   - CSV table summarizing correlation coefficients, p-values, significance, and sample sizes for 
-##     all indices and regions.
+##   - SVG hexagonal density plot showing bacterial-archaeal richness correlations
+##   - Correlation table CSV with statistics for all diversity indices and regions
+##   - Console output with comprehensive correlation analysis results
 ##
 ## Strategy:
-##   The script extracts diversity predictions, merges Archaeal and Bacterial data for each index, 
-##   filters for finite values, and calculates correlations for global (0-90°) and tropics/subtropics 
-##   (0-40°) regions. Results are visualized using hexbin plots with linear regression overlays and 
-##   significance annotations, providing a clear depiction of diversity relationships across taxa and 
-##   latitudinal zones.
+##   The script loads ensemble mean diversity predictions for both Bacteria and Archaea domains
+##   across three diversity indices (richness, Shannon, Chao1). For each index, spatial data
+##   is joined by coordinates and filtered for finite values. Regional analysis compares
+##   global patterns (0-90° latitude) with tropical/subtropical patterns (0-40° latitude).
+##   Pearson correlations with significance testing examine potential coupling between domains.
+##   Hexagonal density plots visualize richness relationships with linear regression fits
+##   and statistical annotations. Comprehensive correlation tables enable comparison across
+##   all diversity indices and regions to assess bacterial-archaeal diversity coupling.
 ##
 ## Required R packages (tested versions):
-##   - dplyr    1.1.2
-##   - ggplot2  3.4.2
-##   - ggpmisc  0.5.4
-##   - hexbin   1.30.1
-##   - raster   3.6.26
+##   - dplyr           1.1.2
+##   - ggplot2         3.4.2
+##   - ggpmisc         0.5.2
+##   - hexbin          1.28.3
+##   - raster          3.6.26
 ## ====================================================================================================
 
-
+### ====================================================================================================================
+### Preparation
+### ====================================================================================================================
 
 # Clear workspace
 rm(list = ls())
 
 # Load required libraries
-library(dplyr)
-library(ggplot2)
-library(ggpmisc) # for stat_poly_eq
-library(hexbin)
-library(raster)
+library(dplyr)          # For data manipulation and filtering operations
+library(ggplot2)        # For creating publication-quality plots and visualizations
+library(ggpmisc)        # For statistical annotations on ggplot2 (stat_poly_eq)
+library(hexbin)         # For hexagonal binning in density plots
+library(raster)         # For handling and processing raster data
 
 # Directories
-wd_out <- "/Code/FigS6/"
+wd_out <- "./Output/"
 
 ## Load all diversity indices data --------------------------------------------
 
 # Load Richness data
-r_archaea <- get(load("Code/2_Extract_model_outputs/2_Output/Non_log/domain_Archaea_Richness_5000_v2.RData"))
-r_bacteria <- get(load("Code/2_Extract_model_outputs/2_Output/Non_log/domain_Bacteria_Richness_5000_v2.RData"))
+r_archaea <- get(load("../2_Extract_model_outputs/6_Output/Non_log/domain_Archaea_Richness_5000_v3.RData"))
+r_bacteria <- get(load("../2_Extract_model_outputs/6_Output/Non_log/domain_Bacteria_Richness_5000_v3.RData"))
 
 # Load Shannon data
-s_archaea <- get(load("Code/2_Extract_model_outputs/2_Output/Non_log/domain_Archaea_Shannon_5000_v2.RData"))
-s_bacteria <- get(load("Code/2_Extract_model_outputs/2_Output/Non_log/domain_Bacteria_Shannon_5000_v2.RData"))
+s_archaea <- get(load("../2_Extract_model_outputs/6_Output/Non_log/domain_Archaea_Shannon_5000_v3.RData"))
+s_bacteria <- get(load("../2_Extract_model_outputs/6_Output/Non_log/domain_Bacteria_Shannon_5000_v3.RData"))
 
 # Load Chao1 data
-c_archaea <- get(load("Code/2_Extract_model_outputs/2_Output/Non_log/domain_Archaea_Chao1_5000_v2.RData"))
-c_bacteria <- get(load("Code/2_Extract_model_outputs/2_Output/Non_log/domain_Bacteria_Chao1_5000_v2.RData"))
+c_archaea <- get(load("../2_Extract_model_outputs/6_Output/Non_log/domain_Archaea_Chao1_5000_v3.RData"))
+c_bacteria <- get(load("../2_Extract_model_outputs/6_Output/Non_log/domain_Bacteria_Chao1_5000_v3.RData"))
 
 # Extract ensemble means
 r_archaea <- r_archaea[[1]]
@@ -93,6 +107,10 @@ df_chao1 <- inner_join(
   by = c("x", "y")
 ) %>%
   filter(is.finite(Archaea), is.finite(Bacteria))
+
+### ====================================================================================================================
+### Correlation Analysis and Visualization
+### ====================================================================================================================
 
 ## Calculate correlations for all indices and regions ----------------------
 
@@ -192,13 +210,13 @@ print(p)
 
 # Save plot and correlation table
 ggsave(
-    paste0(wd_out, "correlation_richness_bacteria_archaea_v2.svg"), 
+    paste0(wd_out, "correlation_richness_bacteria_archaea_v3.svg"), 
     plot = p, width = 3, height = 3, 
     units = "in", dpi = 300)
 
 # Save correlation table as CSV
 write.csv(correlation_results, 
-          paste0(wd_out, "correlation_table_all_diversity_indices.csv"), 
+          paste0(wd_out, "correlation_table_all_diversity_indices_v2.csv"), 
           row.names = FALSE)
 
 cat("\n\nCorrelation table saved to:", paste0(wd_out, "correlation_table_all_diversity_indices.csv"))
