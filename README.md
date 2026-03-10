@@ -1,21 +1,8 @@
-# Reproducibility Materials for Eriksson & Schiller et al.
-“Variations in the latitudinal diversity gradients of the ocean microbiome”
+# Reproducibility Materials for Eriksson & Schiller et al. "Variations in the latitudinal diversity gradients of the ocean microbiome"
 
+## Description
+This repository contains the scripts and Data used in Eriksson, Schiller et al.
 
-Overview:
-    The repository is structured into two main folders:
+1. Code: R scripts used for statistical analysis and to generate associated Figures.
 
-    1. Code/ – Scripts for reproducing the analyses and generating the main figures.
-    2. Data/ – Data files and supporting materials used in the analyses.
-
-    Each script begins with a short introduction describing:
-        - The purpose of the script
-        - Required input files
-        - Generated output files
-
-Folder: Code/
-    Contains R scripts to reproduce the main analyses and main figures from the publication. The scripts are numbered
-    in each directory and saves the outputs in the corresponding output folders. 
-
-Folder: Data/
-    Contains all data inputs required for reproducing the study.
+2. Data: Contextual information about metagenomic samples used in the associated study, along with sample-wise alpha diversity metrics and Data files generated in this study.
