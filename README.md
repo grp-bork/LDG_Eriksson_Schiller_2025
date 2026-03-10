@@ -60,9 +60,9 @@ The `Code` directory contains R scripts used to:
 
 The `Data` directory contains:
 
-- **Sample metadata and contextual information** --> samples_contextual.xlsx
-- **Species diversity (Richness, Shannon, Chao1) across taxonomic ranks** --> species_diversity_taxonomic_rank.xlsx
-- **Derived datasets used for visualization and statistical analyses** --> directory "Data_generated"
+- **Sample metadata and contextual information** --> `samples_contextual.xlsx`
+- **Species diversity (Richness, Shannon, Chao1) across taxonomic ranks** --> `species_diversity_taxonomic_rank.xlsx`
+- **Derived datasets used for visualization and statistical analyses** --> directory `Data_generated`
 
 Raw external datasets used in this study (e.g., metagenomic profiles and environmental climatologies) are referenced but not redistributed in this repository.
 
